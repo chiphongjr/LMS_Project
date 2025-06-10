@@ -1,13 +1,8 @@
-import { Response } from "express";
 import { redis } from "../utils/redis";
 
-export const getUserById = async (id: string, res: Response) => {
+export const getUserById = async (id: string) => {
   const userJson = await redis.get(id);
-  if (userJson) {
-    const user = await JSON.parse(userJson);
-    res.status(201).json({
-      status: true,
-      user,
-    });
-  }
+  if (!userJson) return null;
+  const user = JSON.parse(userJson);
+  return user;
 };

@@ -25,7 +25,6 @@ export const isAuthenticated = async (
   }
 
   const user = await redis.get(decoded.id);
-  console.log("user from redis:", user);
 
   if (!user) {
     return next(new Error("User not found"));

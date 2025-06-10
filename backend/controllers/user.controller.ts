@@ -218,14 +218,25 @@ export const updateAccessToken = async (req: Request, res: Response) => {
 export const getUserInfor = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?._id;
-    getUserById(userId, res);
-    // const userId=await getUserById(req.params.id)
-    //  res.status(200).json({
-    //   success: true,
-    //   userId,
-    // });
+    if (!userId) {
+      res.status(400).json({ status: false, message: "User ID missing" });
+    }
+
+    const user = await getUserById(userId);
+
+    if (!user) {
+      res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      user,
+    });
   } catch (error: any) {
-    throw new Error(error.message);
+    res.status(500).json({
+      status: false,
+      message: error.message || "Internal Server Error",
+    });
   }
 };
 
@@ -280,8 +291,61 @@ export const updateUserInfo = async (req: Request, res: Response) => {
   }
 };
 
-// export const authorizeRoles=(...roles:string[])=>{
-//   return (req:Request,res:Response,next:NextFunction)=>{
-//     if(!roles.includes(req.user?.role))
+interface IChangePassword {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const { oldPassword, newPassword } = req.body as IChangePassword;
+    if (!oldPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: "Please enter your old or new password",
+      });
+      return;
+    }
+
+    const user = await User.findById((req as any).user?._id).select(
+      "+password"
+    );
+    if (!user) {
+      res.status(400).json({ success: false, message: "Invalid user" });
+      return;
+    }
+    const isPasswordMatch = await user?.comparePassword(oldPassword);
+
+    if (!isPasswordMatch) {
+      res.status(400).json({ success: false, message: "Invalid old password" });
+      return;
+    }
+
+    user.password = newPassword;
+    await user.save();
+    await redis.set((req as any).user?._id, JSON.stringify(user));
+    res.status(201).json({ success: true, user });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+interface IUpdateProfilePicture {
+  avatar: string;
+}
+
+// export const updateProfilePicture=async(req:Request,res:Response)=>{
+//   try {
+//     const {avatar}=req.body as IUpdateProfilePicture;
+
+//     const user=req.user;
+//     if(user?.avatar?.public_id){
+//       await
+//     }
+//   } catch (error:any) {
+//     res.status(400).json({message:error.message})
 //   }
 // }

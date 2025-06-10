@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import userRouter from "./routes/user.route";
+import courseRouter from "./routes/course.route";
 
 dotenv.config();
 const app = express();
@@ -16,5 +17,5 @@ app.use(
 );
 
 app.use("/api/v1", userRouter);
-
+app.use("/api/v1", courseRouter);
 export default app;
